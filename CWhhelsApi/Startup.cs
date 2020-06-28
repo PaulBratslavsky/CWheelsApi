@@ -28,6 +28,7 @@ namespace CWhhelsApi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            services.AddMvc().AddXmlSerializerFormatters();
             services.AddDbContext<CWheelsDBContext>(option => option.UseSqlServer(@"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=CWheelsDb;"));
         }
 
@@ -44,7 +45,9 @@ namespace CWhhelsApi
             app.UseRouting();
 
             // Check if database exists
-            cWheelsDBContext.Database.EnsureCreated();
+            // cWheelsDBContext.Database.EnsureCreated();
+
+            // Using migrations
 
             app.UseAuthorization();
 

@@ -24,44 +24,71 @@ namespace CWhhelsApi.Controllers
 
         // GET: api/Vehicles
         [HttpGet]
-        public IEnumerable<Vehicle> Get()
+        public IActionResult Get()
         {
-            return _cWheelsDBContext.Vehicles;
+            // return _cWheelsDBContext.Vehicles;
+            // return StatusCode(StatusCodes.Status200OK);
+            return Ok(_cWheelsDBContext.Vehicles);
         }
 
         // GET: api/Vehicles/5
         [HttpGet("{id}", Name = "Get")]
-        public Vehicle Get(int id)
+        public IActionResult Get(int id)
         {
-            var vehicle = _cWheelsDBContext.Vehicles.Find(id);
-            return vehicle;
+            var entity = _cWheelsDBContext.Vehicles.Find(id);
+            if (entity == null )
+            {
+                return NotFound("No record found with this ID!");
+            } else
+            {
+                return Ok(entity);
+            }
         }
 
         // POST: api/Vehicles
         [HttpPost]
-        public void Post([FromBody] Vehicle vehicle)
+        public IActionResult Post([FromBody] Vehicle vehicle)
         {
             _cWheelsDBContext.Vehicles.Add(vehicle);
             _cWheelsDBContext.SaveChanges();
+            return StatusCode(StatusCodes.Status201Created);
         }
 
         // PUT: api/Vehicles/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] Vehicle vehicle)
+        public IActionResult Put(int id, [FromBody] Vehicle vehicle)
         {
             var entity = _cWheelsDBContext.Vehicles.Find(id);
-            entity.Title = vehicle.Title;
-            entity.Price = vehicle.Price;
-            _cWheelsDBContext.SaveChanges();
+            if (entity == null)
+            {
+                return NotFound("No record found with this ID!");
+            } else
+            {
+                entity.Title = vehicle.Title;
+                entity.Price = vehicle.Price;
+                entity.Color = vehicle.Color;
+                _cWheelsDBContext.SaveChanges();
+                return Ok("Record updated successfully!");
+            }
+            
         }
 
         // DELETE: api/ApiWithActions/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public IActionResult Delete(int id)
         {
             var entity = _cWheelsDBContext.Vehicles.Find(id);
-            _cWheelsDBContext.Vehicles.Remove(entity);
-            _cWheelsDBContext.SaveChanges();
+            if (entity == null)
+            {
+                return NotFound("No record found with this ID!");
+            }
+            else
+            {
+                _cWheelsDBContext.Vehicles.Remove(entity);
+                _cWheelsDBContext.SaveChanges();
+                return Ok("Record deleted!");
+            }
+            
         }
     }
 }
