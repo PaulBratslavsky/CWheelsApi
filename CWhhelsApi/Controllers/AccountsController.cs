@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using AuthenticationPlugin;
 using CWhhelsApi.Data;
 using CWhhelsApi.Models;
+using ImageUploader;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -85,5 +87,73 @@ namespace CWhhelsApi.Controllers
                 user_id = userEmail.Id
             });
         }
+
+        [HttpPost]
+        [Authorize]
+        public IActionResult ChangePassword([FromBody]ChangePasswordModel changePasswordModel)
+        {
+            var userEmail = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email).Value;
+            var user = _cWheelsDBContext.Users.FirstOrDefault(u => u.Email == userEmail);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            if (!SecurePasswordHasherHelper.Verify(changePasswordModel.OldPassword, user.Password))
+            {
+                return Unauthorized("Sorry you can't change the password!");
+            }
+
+            user.Password = SecurePasswordHasherHelper.Hash(changePasswordModel.NewPassword);
+            _cWheelsDBContext.SaveChanges();
+            return Ok("Your password has been changed");
+        }
+
+        [HttpPost]
+        [Authorize]
+        public IActionResult ChangePhone([FromBody]ChangePhoneModel changePhoneModel)
+        {
+            var userEmail = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email).Value;
+            var user = _cWheelsDBContext.Users.FirstOrDefault(u => u.Email == userEmail);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            user.Phone = changePhoneModel.PhoneNumber;
+            _cWheelsDBContext.SaveChanges();
+            return Ok("Your phone number has been changed");
+        }
+
+        [HttpPost]
+        [Authorize]
+        public IActionResult EditUserProfile([FromBody]byte[] ImageArray)
+        {
+            var userEmail = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email).Value;
+            var user = _cWheelsDBContext.Users.FirstOrDefault(u => u.Email == userEmail);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var stream = new System.IO.MemoryStream(ImageArray);
+            var guid = Guid.NewGuid().ToString();
+            var file = $"{guid}.jpg";
+            var folder = "wwwroot";
+            var response = FilesHelper.UploadImage(stream, folder, file);
+            if (!response)
+            {
+                return BadRequest();
+            }
+            else
+            {
+                user.ImageUrl = file;
+                _cWheelsDBContext.SaveChanges();
+                return StatusCode(StatusCodes.Status201Created);
+            }
+        }    
     }
 }
